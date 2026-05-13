@@ -34,7 +34,7 @@ type Command struct {
 type arguments struct {
 	Fields         []string     `json:"fields,omitempty"`
 	Torrents       Torrents     `json:"torrents,omitempty"`
-	Ids            []int        `json:"ids,omitempty"`
+	Ids            interface{}  `json:"ids,omitempty"`
 	DeleteData     bool         `json:"delete-local-data,omitempty"`
 	DownloadDir    string       `json:"download-dir,omitempty"`
 	MetaInfo       string       `json:"metainfo,omitempty"`
@@ -276,7 +276,7 @@ func (ac *TransmissionClient) GetTorrents() (Torrents, error) {
 // GetTorrent takes an id and returns *Torrent
 func (ac *TransmissionClient) GetTorrent(id int) (*Torrent, error) {
 	cmd := NewGetTorrentsCmd()
-	cmd.Arguments.Ids = append(cmd.Arguments.Ids, id)
+	cmd.Arguments.Ids = []int{id}
 
 	out, err := ac.ExecuteCommand(cmd)
 	if err != nil {
@@ -287,6 +287,22 @@ func (ac *TransmissionClient) GetTorrent(id int) (*Torrent, error) {
 		return out.Arguments.Torrents[0], nil
 	}
 	return &Torrent{}, errors.New("No torrent with that id")
+}
+
+// GetTorrentByHash takes a hash and returns *Torrent
+func (ac *TransmissionClient) GetTorrentByHash(hash string) (*Torrent, error) {
+	cmd := NewGetTorrentsCmd()
+	cmd.Arguments.Ids = []string{hash}
+
+	out, err := ac.ExecuteCommand(cmd)
+	if err != nil {
+		return &Torrent{}, err
+	}
+
+	if len(out.Arguments.Torrents) > 0 {
+		return out.Arguments.Torrents[0], nil
+	}
+	return &Torrent{}, errors.New("No torrent with that hash")
 }
 
 // Delete takes a bool, if true it will delete with data;
