@@ -3,7 +3,7 @@ Golang lib for Transmission API
 
 ### Installation
 
-    $ go get github.com/tubbebubbe/transmission
+    $ go get github.com/licryle/go-transmission
 
 ### Usage
 ```go
@@ -12,7 +12,7 @@ package main
 import (
 	"log"
 
-	"github.com/tubbebubbe/transmission"
+	"github.com/licryle/go-transmission"
 )
 
 func main() {
