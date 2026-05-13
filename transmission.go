@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+    "strconv"
 	"io/ioutil"
 	"time"
 )
@@ -290,7 +291,13 @@ func (ac *TransmissionClient) GetTorrent(identifier any) (*Torrent, error) {
     case int:
         cmd.Arguments.Ids = []int{v}
     case string:
-        cmd.Arguments.Ids = []string{v}
+		// If string is numeric, treat as ID. Note: hashes are 40 char long, exceeding int so would fail
+		if id, err := strconv.Atoi(v); err == nil {
+			cmd.Arguments.Ids = []int{id}
+		} else {
+			// otherwise treat as hash
+			cmd.Arguments.Ids = []string{v}
+		}
     default:
         return nil, errors.New("identifier must be an int (ID) or string (hash)")
     }

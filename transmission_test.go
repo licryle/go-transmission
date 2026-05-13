@@ -65,6 +65,38 @@ func TestGetTorrentByHash(t *testing.T) {
 	})
 }
 
+func TestGetTorrentByIntID(t *testing.T) {
+	tSetup(`{"arguments":{"torrents":[{"eta":-1,"id":5,
+  "hashString":"875a2d90068c32b4ce7992eaf56cd03f5be0d193",
+  "leftUntilDone":0,"name":"Test",
+  "rateDownload":0,"rateUpload":0,"status":6,"uploadRatio":0.3114}]},
+  "result":"success"}`)
+	defer tTeardown()
+
+	Convey("Test get torrent by id as int", t, func() {
+		torrent, err := transmissionClient.GetTorrent(5)
+		So(err, ShouldBeNil)
+		So(torrent.ID, ShouldEqual, 5)
+		So(torrent.HashString, ShouldEqual, "875a2d90068c32b4ce7992eaf56cd03f5be0d193")
+	})
+}
+
+func TestGetTorrentByStringID(t *testing.T) {
+	tSetup(`{"arguments":{"torrents":[{"eta":-1,"id":5,
+  "hashString":"875a2d90068c32b4ce7992eaf56cd03f5be0d193",
+  "leftUntilDone":0,"name":"Test",
+  "rateDownload":0,"rateUpload":0,"status":6,"uploadRatio":0.3114}]},
+  "result":"success"}`)
+	defer tTeardown()
+
+	Convey("Test get torrent by id as string", t, func() {
+		torrent, err := transmissionClient.GetTorrent("5")
+		So(err, ShouldBeNil)
+		So(torrent.ID, ShouldEqual, 5)
+		So(torrent.HashString, ShouldEqual, "875a2d90068c32b4ce7992eaf56cd03f5be0d193")
+	})
+}
+
 func TestRemoveTorrent(t *testing.T) {
 	tSetup(`{"arguments":{"torrents":[{"eta":-1,"id":5,
   "leftUntilDone":0,"name":"Test",
