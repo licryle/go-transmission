@@ -58,7 +58,7 @@ func TestGetTorrentByHash(t *testing.T) {
 	defer tTeardown()
 
 	Convey("Test get torrent by hash", t, func() {
-		torrent, err := transmissionClient.GetTorrentByHash("875a2d90068c32b4ce7992eaf56cd03f5be0d193")
+		torrent, err := transmissionClient.GetTorrent("875a2d90068c32b4ce7992eaf56cd03f5be0d193")
 		So(err, ShouldBeNil)
 		So(torrent.ID, ShouldEqual, 5)
 		So(torrent.HashString, ShouldEqual, "875a2d90068c32b4ce7992eaf56cd03f5be0d193")
@@ -74,6 +74,21 @@ func TestRemoveTorrent(t *testing.T) {
 
 	Convey("Test removing torrent", t, func() {
 		name, err := transmissionClient.DeleteTorrent(5, true)
+		So(err, ShouldBeNil)
+		So(name, ShouldEqual, "Test")
+	})
+}
+
+func TestRemoveTorrentByHash(t *testing.T) {
+	tSetup(`{"arguments":{"torrents":[{"eta":-1,"id":5,
+  "hashString":"875a2d90068c32b4ce7992eaf56cd03f5be0d193",
+  "leftUntilDone":0,"name":"Test",
+  "rateDownload":0,"rateUpload":0,"status":6,"uploadRatio":0.3114}]},
+  "result":"success"}`)
+	defer tTeardown()
+
+	Convey("Test removing torrent by hash", t, func() {
+		name, err := transmissionClient.DeleteTorrent("875a2d90068c32b4ce7992eaf56cd03f5be0d193", true)
 		So(err, ShouldBeNil)
 		So(name, ShouldEqual, "Test")
 	})

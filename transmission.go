@@ -191,6 +191,15 @@ func (t Torrents) GetIDs() []int {
 	return ids
 }
 
+// GetHashes returns []string of all the hashes
+func (t Torrents) GetHashes() []string {
+	ids := make([]string, 0, len(t))
+	for i := range t {
+		ids = append(ids, t[i].HashString)
+	}
+	return ids
+}
+
 // sortType keeps track of which sorting we are using
 var sortType = SortID // SortID is transmission's default
 
@@ -274,46 +283,38 @@ func (ac *TransmissionClient) GetTorrents() (Torrents, error) {
 }
 
 // GetTorrent takes an id and returns *Torrent
-func (ac *TransmissionClient) GetTorrent(id int) (*Torrent, error) {
-	cmd := NewGetTorrentsCmd()
-	cmd.Arguments.Ids = []int{id}
+func (ac *TransmissionClient) GetTorrent(identifier any) (*Torrent, error) {
+    cmd := NewGetTorrentsCmd()
 
-	out, err := ac.ExecuteCommand(cmd)
-	if err != nil {
-		return &Torrent{}, err
-	}
+    switch v := identifier.(type) {
+    case int:
+        cmd.Arguments.Ids = []int{v}
+    case string:
+        cmd.Arguments.Ids = []string{v}
+    default:
+        return nil, errors.New("identifier must be an int (ID) or string (hash)")
+    }
 
-	if len(out.Arguments.Torrents) > 0 {
-		return out.Arguments.Torrents[0], nil
-	}
-	return &Torrent{}, errors.New("No torrent with that id")
-}
+    out, err := ac.ExecuteCommand(cmd)
+    if err != nil {
+        return nil, err
+    }
 
-// GetTorrentByHash takes a hash and returns *Torrent
-func (ac *TransmissionClient) GetTorrentByHash(hash string) (*Torrent, error) {
-	cmd := NewGetTorrentsCmd()
-	cmd.Arguments.Ids = []string{hash}
-
-	out, err := ac.ExecuteCommand(cmd)
-	if err != nil {
-		return &Torrent{}, err
-	}
-
-	if len(out.Arguments.Torrents) > 0 {
-		return out.Arguments.Torrents[0], nil
-	}
-	return &Torrent{}, errors.New("No torrent with that hash")
+    if len(out.Arguments.Torrents) > 0 {
+        return out.Arguments.Torrents[0], nil
+    }
+    return nil, errors.New("No torrent found")
 }
 
 // Delete takes a bool, if true it will delete with data;
 // returns the name of the deleted torrent if it succeed
-func (ac *TransmissionClient) DeleteTorrent(id int, wd bool) (string, error) {
-	torrent, err := ac.GetTorrent(id)
+func (ac *TransmissionClient) DeleteTorrent(identifier any, wd bool) (string, error) {
+	torrent, err := ac.GetTorrent(identifier)
 	if err != nil {
 		return "", err
 	}
 
-	cmd := newDelCmd(id, wd)
+	cmd := newDelCmd(torrent.ID, wd)
 
 	_, err = ac.ExecuteCommand(cmd)
 	if err != nil {
@@ -346,18 +347,18 @@ func (ac *TransmissionClient) GetStats() (*Stats, error) {
 }
 
 // StartTorrent start the torrent
-func (ac *TransmissionClient) StartTorrent(id int) (string, error) {
-	return ac.sendSimpleCommand("torrent-start", id)
+func (ac *TransmissionClient) StartTorrent(identifier any) (string, error) {
+	return ac.sendSimpleCommand("torrent-start", identifier)
 }
 
 // StopTorrent start the torrent
-func (ac *TransmissionClient) StopTorrent(id int) (string, error) {
-	return ac.sendSimpleCommand("torrent-stop", id)
+func (ac *TransmissionClient) StopTorrent(identifier any) (string, error) {
+	return ac.sendSimpleCommand("torrent-stop", identifier)
 }
 
 // VerifyTorrent verifies a torrent
-func (ac *TransmissionClient) VerifyTorrent(id int) (string, error) {
-	return ac.sendSimpleCommand("torrent-verify", id)
+func (ac *TransmissionClient) VerifyTorrent(identifier any) (string, error) {
+	return ac.sendSimpleCommand("torrent-verify", identifier)
 }
 
 // StartAll starts all the torrents
@@ -539,9 +540,18 @@ func (ac *TransmissionClient) Version() string {
 	return resp.Arguments.Version
 }
 
-func (ac *TransmissionClient) sendSimpleCommand(method string, id int) (result string, err error) {
+func (ac *TransmissionClient) sendSimpleCommand(method string, identifier any) (result string, err error) {
 	cmd := Command{Method: method}
-	cmd.Arguments.Ids = []int{id}
+	
+	switch v := identifier.(type) {
+    case int:
+        cmd.Arguments.Ids = []int{v}
+    case string:
+        cmd.Arguments.Ids = []string{v}
+    default:
+        return "", errors.New("identifier must be int (ID) or string (Hash)")
+    }
+
 	resp, err := ac.sendCommand(cmd)
 	return resp.Result, err
 }
